@@ -13,6 +13,7 @@ class ImportLocators:
     btn_import = (By.ID, 'yest-btn-import-doImport')
     btn_terminate = (By.ID, 'yest-btn-import-sample-terminate')
     tile_sample_LR = (By.ID, 'yest-tile-sample-LR')
+    error_message = (By.ID, "yest-error-no-attachment-creation-right")
 
 
 class WorkflowIssueLocators:
@@ -29,18 +30,32 @@ class WorkflowIssueLocators:
     message_wrong_permissions = (By.ID, "yest-warning-insufficient-rights")
 
 
+def is_import(btn):
+    @print_timing("selenium_yest4jira_import:is_import")
+    def measure():
+        return "doImport" in btn.get_attribute("data-testid")
+
+    return measure();
+
+
 def import_sample(page, sample_tile_locator):
     page.wait_until_clickable(ImportLocators.tile_sample).click()
+    page.wait_until_clickable(sample_tile_locator).click()  # Click sample
     page.wait_until_clickable(ImportLocators.select_project).click()
     yest_projects = page.get_elements(ImportLocators.select_options)
     if yest_projects:
         rnd_project_el = random.choice(yest_projects)
         page.action_chains().move_to_element(rnd_project_el).click(rnd_project_el).perform()
-        page.get_element(sample_tile_locator).click()  # Click sample
         page.wait_until_clickable(ImportLocators.btn_import)  # Wait button 'import'
-        page.get_element(ImportLocators.btn_import).click()  # Click 'import'
-        page.wait_until_clickable(ImportLocators.btn_terminate).click()  # Click button 'Terminate'
-        page.wait_until_visible(ImportLocators.tile_sample)  # Wait for Yest Sample tile
+        btn_import = page.get_element(ImportLocators.btn_import)
+        if is_import(btn_import):
+            btn_import.click()
+            page.wait_until_clickable(ImportLocators.btn_terminate).click()  # Click button 'Terminate'
+            page.wait_until_visible(ImportLocators.tile_sample)  # Wait for Yest Sample tile
+        else:
+            page.wait_until_visible(ImportLocators.error_message)
+            btn_import.click()
+            page.wait_until_visible(ImportLocators.tile_sample)  # Wait for Yest Sample tile
 
 
 def app_yest4jira_import(webdriver, datasets):
@@ -82,7 +97,9 @@ def set_yest_workflow_issue_type(issue_page):
 
 def app_yest4jira_edit(webdriver, datasets):
     page = BasePage(webdriver)
-    issue_key = datasets['issue_key']
+    app_specific_issue = random.choice(datasets['custom_issues'])
+    issue_key = app_specific_issue[0]
+
     page.go_to_url(f"{JIRA_SETTINGS.server_url}/browse/{issue_key}")
 
     @print_timing("selenium_yest4jira:edit_workflow")
