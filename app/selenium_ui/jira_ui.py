@@ -55,12 +55,6 @@ def test_1_selenium_view_project_summary(jira_webdriver, jira_datasets, jira_scr
     modules.view_project_summary(jira_webdriver, jira_datasets)
 
 
-# commented for execution without Yest4Jira app
-# (404 error because /plugins/servlet/yest/configuration not accessible)
-def test_1_selenium_custom_action_yest4jira_import(jira_webdriver, jira_datasets, jira_screen_shots):
-    extension_ui.app_yest4jira_import(jira_webdriver, jira_datasets)
-
-
 def test_1_selenium_custom_action_yest4jira_edit(jira_webdriver, jira_datasets, jira_screen_shots):
     extension_ui.app_yest4jira_edit(jira_webdriver, jira_datasets)
 
