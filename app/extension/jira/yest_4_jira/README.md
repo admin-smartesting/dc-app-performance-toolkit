@@ -1,15 +1,23 @@
 ### Plugin information
 Yest4Jira introduces a new issue type named 'Yest Workflow'.
-A Yest workflow is a graphical model to figure out some business rules.
-A Yest workflow is designed by a tester or a PO and is comprehensive for all the stakeholders in a agile team.
-
-**/!\   The concept of 'Yest Workflow' is not equivalent to the concept of workflow in Atlassian Jira. It's a graphical representation of testing use cases used in testing domain.**
+A 'Yest workflow' is a graphical model (diagram BPMN-like) to figure out some business rules.
+A 'Yest workflow' is designed by a functional tester or a PO and is comprehensive for all the stakeholders inside a agile team.
 
 The DataCenter/Server version of the app is available at :
 https://jira.smartesting.com/yest4jira/yest4jira-server-3.0.0.obr
 
+> **/!\\** The concept of 'Yest Workflow' is not equivalent to the concept of workflow in Atlassian Jira. It's a graphical representation of testing use cases used in testing domain.
+
+
+######Main app usage (>95%)
+The main feature of the app Yest4Jira is to allow the user to design a Yest Workflow.
+This design is done from an issue with the specific issue type named 'Yest Workflow'.
+Thus a Jira project must be associated to this issue type to create a Yest Workflow inside. 
 The content of the graphical representation is stored in a unique issue attachment named "workflow.yest".
 
+######Others usages (<5%)
+* import of existing workflows (from hard-coded Yest samples or from local BPMN.iO file).
+* Jira Yest Project Configuration (with a dedicated page) helping the user to associate the 'Yest Workflow' issue type to a given project. 
 
 ###### Screenshots
 
@@ -23,49 +31,55 @@ This editor is full client-side (React) and not uses a dedicated iframe (dialog 
 ![](images/yestWorkflowEditor.png)
 
 
+### Technical information
+* Yest4Jira need a new issue type in the Jira system: 'Yest Workflow'
+* All the 'Yest Workflow' modifications are done via the Rest API :
+    - creation/removal of the attachment `workflow.yest` (to store the diagram content)
+    - update of dedicated issue property (to save the 'Yest Workflow' version)
+    - add of a facultative issue comment while the 'Yest Workflow' saving
+    - update of the issue links to other 'Yest Workflow' issues (sub workflows)
+* The Jira Yest Project Configuration page (used to associate the issue type 'Yest Workflow' to a project) is done via a POST request (`${jira_instance}/plugins/servlet/yest/mainPage`)
+* Yest4Jira does not add a new point in the existing API. 
+* Yest4Jira does not communicate with an external server. 
+ 
+
 ### Testing Notes
-* Yest4Jira add a new issue type in the Jira system: 'Yest Workflow'
-* \>99% of the use of Yest4Jira consists in designing: create/modify a Jira ticket typed 'Yest Workflow'.  (first screenshot)
-* \<1% of the use of Yest4Jira consists in importing existing diagrams (predefined Yest samples or local BPMN.iO files) (second screenshot)
-* Depending on his attachment rights, a user may or may not modify a 'Yest Workflow' ticket.
-* All modification actions are done via the Rest API.
-* Yest4Jira does not add a new point in the existing API
+* \>95% of the use of Yest4Jira consists in designing: create/modify a Jira ticket typed 'Yest Workflow' (cf. screenshots).
+    The remaining usages will be not tested (for Data Center approval) 
 * To create/update an issue with the type 'Yest Workflow' the issue project must refer the issue type 'Yest Workflow'. A Yest configuration page helps the user to associate this issue type with a project.
  For this Yest4Jira use the url "/plugins/servlet/yest/configuration" (POST request with json data = {project: 'your_project_key'})
- This request will be tested by a JMeter entry.
- 
-/!\ For the DC tests, after Yest4Jira installed, some projects should be configured for Yest (i.e. having the issue type 'Yest Workflow')
-For the DC testing, we have been configured 50% of the projects for Yest (<20% in real life) 
-The installation of the 'Yest Workflow' is done through the Yest Configuration Page (`${jira_instance}/plugins/servlet/yest/mainPage`, menu Configuration)
-The configuration of 50% of projects is done through this configuration page or manually (classical Issue types configuration).
+ This request will be tested by a JMeter entry. 
  
 
-### How to implement
+### Test implementation
 * The 'Yest Workflow' edition will be tested by a Selenium UI test case
-* The 'Yest Workflow' import will be tested by a Selenium UI test case
 * The project configuration for Yest (POST request) will be tested by a Jmeter test case
 
-###### Selenium
-Two test cases have been implemented according the 2 use cases (edition & import). These ones are in dedicated folder `app/extension/jira/yest_4_jira`.
+#### Selenium
+One UI test case (`app_yest4jira_edit`) has been implemented according the main usage (edition of workflow). 
+This test is available in the dedicated folder `app/extension/jira/yest_4_jira`.
+The main actions of this test are:
+* open an existing 'Yest Workflow' issue ('browse' url) from a dedicated custom data set
+* click 'Edit' button => an editor dialog is expected
+* add an element in the workflow
+* close the editor dialog => a 'Saving' dialog is expected
+* confirm save & close by clicking the button 'Save and close'
 
-* `app_yest4jira_import`: tests a Yest sample import from the 'Yest' page.
-**This test must be commented if the app is not installed** (the 'Yest' page does not exist) 
+###### Important Prerequisites:
+The Jira instance used to execute the tests should contain a project configured for Yest (i.e. having the issue type 'Yest Workflow').
+This project should contains a realistic number of issues typed 'Yest Workflow' (we created 5000 issues for the DataCenter performance testing in enterprise-scale environment). 
+These issues should have the summary starting by 'YestWorkflowIssue'
+As the Yest workflow is stored as attachment, then the users used for testing must have the following permissions :
+  - CREATE_ATTACHMENT
+  - DELETE_ALL_ATTACHMENTS
+The Yest Selenium test will choose a random issue among these issues named 'YestWorkflowIssue*' 
 
-
-* `app_yest4jira_edit`: tests the workflow edition & saving from any issue
-
-    If the issue does not have the type 'Yest Workflow', then this type is selected among the available ones.
-    
-    If the current user does not have the permissions to create/delete the attachment, a warning message is expected.
-    
-    Else the test executes a workflow modification and save it through the dedicated editor.
-     
-
-###### JMeter
+#### JMeter
 One test case has been implemented to test the POST request used to configure a project for Yest.
-The frequency of project configuration is very low (set to 1%). **If the app is not installed this test must be disabled (set to 0%)**  
+The frequency of project configuration is very low (set to 1%). 
+The app must be installed to execute this test.  
 
-Request Details:
+###### Request Details:
 ```
 method: POST 
 url: /plugins/servlet/yest/configuration
@@ -74,7 +88,4 @@ data: { project: '<your_project_key>' }
 
 
 ### Run test
-
-
-Run test:
 `bzt jira.yml`
