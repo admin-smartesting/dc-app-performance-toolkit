@@ -40,7 +40,8 @@ This editor is full client-side (React) and not uses a dedicated iframe (dialog 
     - update of the issue links to other 'Yest Workflow' issues (sub workflows)
 * The Jira Yest Project Configuration page (used to associate the issue type 'Yest Workflow' to a project) is done via a POST request (`${jira_instance}/plugins/servlet/yest/mainPage`)
 * Yest4Jira does not add a new point in the existing API. 
-* Yest4Jira does not communicate with an external server. 
+* Yest4Jira does not communicate with an external server. The editor dialog for 'Yest Workflow' edition (cf. second screenshot) is fully client-side.
+
  
 
 ### Testing Notes
