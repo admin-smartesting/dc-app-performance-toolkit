@@ -77,7 +77,7 @@ The Yest Selenium test will choose a random issue among these issues named 'Yest
 
 #### JMeter
 One test case has been implemented to test the POST request used to configure a project for Yest.
-The frequency of project configuration is very low (set to 1%). 
+The frequency of project configuration is very low (set to 2%). 
 The app must be installed to execute this test.  
 
 ###### Request Details:
